@@ -1,0 +1,24 @@
+# Environment
+.env
+venv/
+*.egg-info
+
+# Data files (too large for GitHub)
+data/
+
+# Logs (auto-generated, local only)
+logs/
+
+# dbt generated files
+dbt/target/
+dbt/profiles.yml
+dbt/dbt_packages/
+
+# Python bytecode
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
