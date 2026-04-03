@@ -1,26 +1,61 @@
-# Environment
+# ============================================================================
+# ENVIRONMENT AND SECRETS
+# ============================================================================
 .env
 venv/
 *.egg-info
 
-# Data files (too large for GitHub)
+# ============================================================================
+# DATA - NEVER COMMIT ANY DATA FILES REGARDLESS OF SOURCE OR FORMAT
+# Raw, processed, exported, or derived data all stays local
+# ============================================================================
 data/
-data/exploration/
 dbt/seeds/
 
-# Logs (auto-generated, local only)
+# Data file extensions - catch any data files that end up anywhere in project
+*.csv
+*.parquet
+*.json.gz
+*.xlsx
+*.xls
+*.tsv
+*.db
+*.sqlite
+*.sqlite3
+*.duckdb
+
+# ============================================================================
+# LOGS - AUTO-GENERATED, LOCAL ONLY
+# ============================================================================
 logs/
 
-# dbt generated files
+# ============================================================================
+# DBT GENERATED FILES
+# ============================================================================
 dbt/target/
 dbt/profiles.yml
 dbt/dbt_packages/
 
-# Python bytecode
+# ============================================================================
+# PYTHON
+# ============================================================================
 __pycache__/
 *.pyc
+*.pyo
 .pytest_cache/
+*.egg-info/
+dist/
+build/
 
-# OS files
+# ============================================================================
+# JUPYTER NOTEBOOKS - SCRATCH FILES, NOT PRODUCTION CODE
+# ============================================================================
+data/exploration/
+*.ipynb
+
+# ============================================================================
+# OS FILES
+# ============================================================================
 .DS_Store
 Thumbs.db
+desktop.ini
