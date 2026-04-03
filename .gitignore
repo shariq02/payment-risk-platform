@@ -5,6 +5,8 @@ venv/
 
 # Data files (too large for GitHub)
 data/
+data/exploration/
+dbt/seeds/
 
 # Logs (auto-generated, local only)
 logs/
