@@ -1,0 +1,213 @@
+version: 2
+
+# ============================================================================
+# SOURCE DEFINITIONS
+# Points dbt to bronze schema tables in PostgreSQL
+# Source freshness checks warn if bronze data is stale
+# ============================================================================
+
+sources:
+  - name: bronze
+    schema: bronze
+    description: "Raw Olist e-commerce data loaded from CSV files. One source per CSV file. No transformations applied - faithful copy of source data."
+    freshness:
+      warn_after: {count: 24, period: hour}
+      error_after: {count: 48, period: hour}
+    loaded_at_field: _ingested_at
+
+    tables:
+      - name: orders
+        description: "One row per order. Primary key order_id is unique."
+        columns:
+          - name: order_id
+            tests:
+              - unique
+              - not_null
+          - name: customer_id
+            tests:
+              - not_null
+          - name: order_status
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['delivered','shipped','canceled','unavailable',
+                           'invoiced','processing','created','approved']
+
+      - name: order_items
+        description: "One row per item within an order. Composite PK order_id + order_item_id."
+        columns:
+          - name: order_id
+            tests:
+              - not_null
+          - name: order_item_id
+            tests:
+              - not_null
+          - name: product_id
+            tests:
+              - not_null
+          - name: seller_id
+            tests:
+              - not_null
+          - name: price
+            tests:
+              - not_null
+
+      - name: order_payments
+        description: "One row per payment transaction. One order can have multiple payment rows."
+        columns:
+          - name: order_id
+            tests:
+              - not_null
+          - name: payment_sequential
+            tests:
+              - not_null
+          - name: payment_type
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['credit_card','debit_card','boleto','voucher','not_defined']
+          - name: payment_value
+            tests:
+              - not_null
+
+      - name: customers
+        description: "One row per customer_id. customer_unique_id is the real customer identifier."
+        columns:
+          - name: customer_id
+            tests:
+              - unique
+              - not_null
+          - name: customer_unique_id
+            tests:
+              - not_null
+
+      - name: sellers
+        description: "One row per seller. Primary key seller_id is unique."
+        columns:
+          - name: seller_id
+            tests:
+              - unique
+              - not_null
+
+      - name: products
+        description: "One row per product. product_category_name has 610 nulls."
+        columns:
+          - name: product_id
+            tests:
+              - unique
+              - not_null
+
+      - name: reviews
+        description: "One row per review submission. review_id has 814 duplicates - composite key used."
+        columns:
+          - name: order_id
+            tests:
+              - not_null
+          - name: review_score
+            tests:
+              - not_null
+
+      - name: geolocation
+        description: "Multiple rows per zip code prefix. No primary key. Average lat/lng computed in staging."
+
+# ============================================================================
+# STAGING MODEL DEFINITIONS AND TESTS
+# ============================================================================
+
+models:
+  - name: stg_orders
+    description: "Typed and cleaned orders. Timestamps cast to TIMESTAMPTZ. One row per order."
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+      - name: order_status
+        tests:
+          - not_null
+      - name: order_purchase_ts
+        tests:
+          - not_null
+
+  - name: stg_order_items
+    description: "Typed order items. Price and freight cast to DECIMAL. One row per order item."
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: order_item_id
+        tests:
+          - not_null
+      - name: product_id
+        tests:
+          - not_null
+      - name: seller_id
+        tests:
+          - not_null
+
+  - name: stg_order_payments
+    description: "Typed payments. payment_value cast to DECIMAL. One row per payment transaction."
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: payment_sequential
+        tests:
+          - not_null
+      - name: payment_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['credit_card','debit_card','boleto','voucher','not_defined']
+      - name: payment_value
+        tests:
+          - not_null
+
+  - name: stg_customers
+    description: "Typed customers. customer_unique_id is the real customer identifier."
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        tests:
+          - not_null
+
+  - name: stg_sellers
+    description: "Typed sellers. One row per seller."
+    columns:
+      - name: seller_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_products
+    description: "Typed products. English category names joined from translation. Olist typos corrected."
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_reviews
+    description: "Typed reviews. Deduplicated by order_id keeping latest review. One row per order."
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: review_score
+        tests:
+          - not_null
+
+  - name: stg_geolocation
+    description: "Averaged geolocation. One row per zip code prefix using mean lat/lng."
+    columns:
+      - name: zip_code_prefix
+        tests:
+          - unique
+          - not_null
