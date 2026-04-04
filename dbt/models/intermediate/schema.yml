@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: int_seller_performance
+    description: >
+      30-day rolling seller performance metrics. One row per seller.
+      Computes late_delivery_rate, avg_review_score, cancellation_rate,
+      seller_reliability_score, and risk_tier.
+      Sellers with fewer than 5 orders flagged as insufficient_data.
+      Used by int_fulfillment_risk_features and dim_seller mart model.
+    columns:
+      - name: seller_id
+        tests:
+          - unique
+          - not_null
+
+  - name: int_customer_behaviour
+    description: >
+      Customer payment behaviour features aggregated at customer_unique_id level.
+      One row per real customer (not per order).
+      Computes total_orders, avg_payment_value, preferred_payment_type,
+      has_dispute_history, and assigns segment_code and risk_tier_code.
+      Used by int_payment_risk_features and dim_customer mart model.
+    columns:
+      - name: customer_unique_id
+        tests:
+          - unique
+          - not_null
+
+  - name: int_payment_risk_features
+    description: >
+      Payment risk features and composite payment_risk_score per payment transaction.
+      One row per payment transaction (same grain as fact_order_payments).
+      Score range 0.0 to 1.0. Signals: payment type, installments,
+      dispute history, high value, new customer.
+      Used by fact_order_payments mart model.
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: payment_sequential
+        tests:
+          - not_null
+      - name: payment_risk_score
+        tests:
+          - not_null
+
+  - name: int_fulfillment_risk_features
+    description: >
+      Fulfillment risk features and composite fulfillment_risk_score per order item.
+      One row per order item (same grain as fact_order_fulfillment).
+      Score range 0.0 to 1.0. Signals: cancellation, late delivery,
+      dispute proxy review, seller performance, new seller.
+      Used by fact_order_fulfillment mart model.
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: order_item_id
+        tests:
+          - not_null
+      - name: fulfillment_risk_score
+        tests:
+          - not_null

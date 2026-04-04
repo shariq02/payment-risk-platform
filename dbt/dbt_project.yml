@@ -8,6 +8,7 @@ model-paths: ["models"]
 test-paths: ["tests"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
+seed-paths: ["seeds"]
 
 target-path: "target"
 clean-targets:
@@ -24,3 +25,20 @@ models:
     marts:
       +materialized: table
       +schema: mart
+
+# ============================================================================
+# DBT VARIABLES
+# Risk thresholds and business logic parameters
+# Documented in DECISION_LOG.txt
+# ============================================================================
+vars:
+  # Payment risk thresholds
+  high_value_threshold: 500          # BRL - payments above this are high value
+  high_risk_score_threshold: 0.7     # payments above this flagged as dispute risk
+
+  # Seller performance thresholds
+  seller_late_delivery_threshold: 0.15  # 15% late delivery rate = elevated risk
+  seller_min_orders_threshold: 5        # minimum orders for reliable metrics
+
+  # Fulfillment risk
+  dispute_proxy_review_score: 2      # review score <= this = dispute proxy
