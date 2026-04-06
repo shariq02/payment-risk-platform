@@ -1,0 +1,102 @@
+version: 2
+
+models:
+  - name: dim_geo
+    description: "Geography dimension. One row per zip code prefix. Averaged lat/lng from geolocation data."
+    columns:
+      - name: zip_code_prefix
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_product
+    description: "Product dimension. One row per product. English category names. No SCD2."
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_time
+    description: "Time dimension. One row per hour from 2016-01-01 to 2018-12-31. Flattened design."
+    columns:
+      - name: time_sk
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_customer
+    description: >
+      Customer dimension. One row per customer_unique_id (current state).
+      SCD2 history maintained by snap_customer_profile snapshot.
+      Natural key is customer_unique_id not customer_id (which is per-order).
+    columns:
+      - name: customer_unique_id
+        tests:
+          - unique
+          - not_null
+      - name: segment_sk
+        tests:
+          - not_null
+
+  - name: dim_seller
+    description: >
+      Seller dimension. One row per seller_id (current state).
+      SCD2 history maintained by snap_seller_risk_profile snapshot.
+      risk_tier assigned from int_seller_performance model.
+    columns:
+      - name: seller_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fact_order_payments
+    description: >
+      Central payment fact table. Grain: one row per payment transaction.
+      Business process: payment risk.
+      SCD2 point-in-time join used for dim_customer.
+      payment_risk_score range 0.0 to 1.0.
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: payment_sequential
+        tests:
+          - not_null
+      - name: payment_value
+        tests:
+          - not_null
+      - name: payment_risk_score
+        tests:
+          - not_null
+
+  - name: fact_order_fulfillment
+    description: >
+      Fulfillment fact table. Grain: one row per order item.
+      Business process: fulfillment risk.
+      SCD2 point-in-time join used for dim_seller.
+      fulfillment_risk_score range 0.0 to 1.0.
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: order_item_id
+        tests:
+          - not_null
+      - name: item_price
+        tests:
+          - not_null
+      - name: fulfillment_risk_score
+        tests:
+          - not_null
+
+  - name: risk_kpis_daily
+    description: >
+      Pre-aggregated daily KPIs from both fact tables.
+      One row per date. Covers full Olist date range 2016-2018.
+      Refreshed every 30 minutes by Airflow DAG 2.
+    columns:
+      - name: date_actual
+        tests:
+          - unique
+          - not_null

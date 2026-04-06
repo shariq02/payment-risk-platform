@@ -62,7 +62,7 @@ seller_orders AS (
 seller_first_order AS (
     SELECT
         seller_id,
-        MIN(order_purchase_ts) AS first_order_ts
+        NULLIF(MIN(order_purchase_ts)::TEXT, 'NaN')::TIMESTAMPTZ AS first_order_ts
     FROM seller_orders
     GROUP BY seller_id
 ),
