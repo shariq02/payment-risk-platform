@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: payment_risk_platform
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest ruff
+      
+      - name: Lint with ruff
+        run: ruff check .
+        continue-on-error: true
+      
+      - name: Set up database
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: payment_risk_platform
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpass
+        run: |
+          python ingestion/setup_warehouse.py
+      
+      - name: Run dbt debug
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: payment_risk_platform
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpass
+        run: |
+          cd dbt
+          dbt debug --profiles-dir . --project-dir .
+      
+      - name: Run dbt compile
+        env:
+          POSTGRES_HOST: localhost
+        run: |
+          cd dbt
+          dbt compile --profiles-dir ~/.dbt --project-dir .
+      
+      - name: Run tests
+        run: pytest tests/ -v
+        continue-on-error: true

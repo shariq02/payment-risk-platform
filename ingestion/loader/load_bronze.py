@@ -228,6 +228,29 @@ def add_audit_columns(df: pd.DataFrame, source_file: str) -> pd.DataFrame:
     return df
 
 
+def convert_nan_to_none(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert pandas NaN/nan to None (SQL NULL) for database insertion.
+    
+    Bug fix: dtype=str in read_csv converts missing values to float nan objects,
+    which then get converted to string 'NaN' when passed to psycopg2.
+    This caused 'NaN' strings to be inserted into PostgreSQL instead of NULL.
+    
+    Solution: Use pandas.isna() to detect NaN objects and replace with None.
+    Also catch any literal 'NaN' strings as defensive measure.
+    
+    Affected columns identified:
+      - orders: order_approved_at (160 rows), order_delivered_carrier_date (1783),
+        order_delivered_customer_date (2965)
+      - products: product_name_length (610), product_description_length (610),
+        product_photos_qty (610), product_weight_g (610), product_length_cm (610),
+        product_height_cm (610), product_width_cm (610)
+    """
+    import numpy as np
+    df = df.replace({np.nan: None, 'NaN': None})
+    return df
+
+
 def load_table(conn, df: pd.DataFrame, table: str, primary_keys: list):
     """
     Load DataFrame into bronze table using INSERT ON CONFLICT DO NOTHING.
@@ -355,6 +378,7 @@ def run():
                 df = read_csv(filepath, table)
                 df = deduplicate(df, primary_keys, table)
                 df = add_audit_columns(df, filename)
+                df = convert_nan_to_none(df)
                 load_table(conn, df, table, primary_keys)
                 loaded.append(table)
             except Exception as exc:
