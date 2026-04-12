@@ -38,6 +38,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest ruff
+          pip install protobuf==4.25.3
+      
+      - name: Create dbt profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << EOF
+          payment_risk_platform:
+            target: dev
+            outputs:
+              dev:
+                type: postgres
+                host: localhost
+                port: 5432
+                user: postgres
+                password: testpass
+                dbname: payment_risk_platform
+                schema: public
+                threads: 4
+          EOF
       
       - name: Lint with ruff
         run: ruff check .
@@ -54,15 +73,9 @@ jobs:
           python ingestion/setup_warehouse.py
       
       - name: Run dbt debug
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          POSTGRES_DB: payment_risk_platform
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: testpass
         run: |
           cd dbt
-          dbt debug --profiles-dir . --project-dir .
+          dbt debug --profiles-dir ~/.dbt --project-dir .
       
       - name: Run dbt compile
         env:
