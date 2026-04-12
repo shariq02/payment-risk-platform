@@ -60,6 +60,7 @@ jobs:
       
       - name: Download seed file
         run: |
+          mkdir -p dbt/seeds
           wget -O dbt/seeds/product_category_name_translation.csv https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/product_category_name_translation.csv
       
       - name: Lint with ruff
