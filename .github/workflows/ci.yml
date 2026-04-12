@@ -58,11 +58,15 @@ jobs:
                 threads: 4
           EOF
       
+      - name: Download seed file
+        run: |
+          wget -O dbt/seeds/product_category_name_translation.csv https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/product_category_name_translation.csv
+      
       - name: Lint with ruff
         run: ruff check .
         continue-on-error: true
       
-      - name: Set up database
+      - name: Set up database schema
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
@@ -72,14 +76,12 @@ jobs:
         run: |
           python ingestion/setup_warehouse.py
       
-      - name: Run dbt debug
+      - name: Load dbt seed
         run: |
           cd dbt
-          dbt debug --profiles-dir ~/.dbt --project-dir .
+          dbt seed --profiles-dir ~/.dbt --project-dir .
       
       - name: Run dbt compile
-        env:
-          POSTGRES_HOST: localhost
         run: |
           cd dbt
           dbt compile --profiles-dir ~/.dbt --project-dir .
