@@ -171,6 +171,20 @@ jobs:
       - name: dbt seed
         run: dbt seed --profiles-dir ~/.dbt --project-dir dbt
       
+      - name: Download Olist dataset
+        run: |
+          mkdir -p data/raw
+          cd data/raw
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_customers_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_geolocation_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_items_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_payments_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_reviews_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_orders_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_products_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_sellers_dataset.csv
+          cd ../..
+      
       - name: Load bronze data
         run: python ingestion/loader/load_bronze.py
         env:
@@ -297,6 +311,29 @@ jobs:
           mkdir -p dbt/seeds
           wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/product_category_name_translation.csv -O dbt/seeds/product_category_name_translation.csv
       
+      - name: Download Olist dataset
+        run: |
+          mkdir -p data/raw
+          cd data/raw
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_customers_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_geolocation_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_items_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_payments_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_reviews_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_orders_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_products_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_sellers_dataset.csv
+          cd ../..
+      
+      - name: Load bronze data
+        run: python ingestion/loader/load_bronze.py
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: payment_risk_platform
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpass
+      
       - name: dbt seed and run
         run: |
           dbt seed --profiles-dir ~/.dbt --project-dir dbt
@@ -383,6 +420,29 @@ jobs:
           mkdir -p dbt/seeds
           wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/product_category_name_translation.csv -O dbt/seeds/product_category_name_translation.csv
       
+      - name: Download Olist dataset
+        run: |
+          mkdir -p data/raw
+          cd data/raw
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_customers_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_geolocation_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_items_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_payments_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_reviews_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_orders_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_products_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_sellers_dataset.csv
+          cd ../..
+      
+      - name: Load bronze data
+        run: python ingestion/loader/load_bronze.py
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: payment_risk_platform
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpass
+      
       - name: dbt seed and run
         run: |
           dbt seed --profiles-dir ~/.dbt --project-dir dbt
@@ -466,6 +526,29 @@ jobs:
         run: |
           mkdir -p dbt/seeds
           wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/product_category_name_translation.csv -O dbt/seeds/product_category_name_translation.csv
+      
+      - name: Download Olist dataset
+        run: |
+          mkdir -p data/raw
+          cd data/raw
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_customers_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_geolocation_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_items_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_payments_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_reviews_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_orders_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_products_dataset.csv
+          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_sellers_dataset.csv
+          cd ../..
+      
+      - name: Load bronze data
+        run: python ingestion/loader/load_bronze.py
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: payment_risk_platform
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpass
       
       - name: dbt seed and run
         run: |
