@@ -199,6 +199,10 @@ jobs:
       
       - name: dbt run
         run: dbt run --profiles-dir ~/.dbt --project-dir dbt
+          dbt snapshot --profiles-dir ~/.dbt --project-dir dbt
+      
+      - name: dbt snapshot
+        run: dbt snapshot --profiles-dir ~/.dbt --project-dir dbt
       
       - name: dbt test
         run: dbt test --profiles-dir ~/.dbt --project-dir dbt
@@ -338,6 +342,7 @@ jobs:
         run: |
           dbt seed --profiles-dir ~/.dbt --project-dir dbt
           dbt run --profiles-dir ~/.dbt --project-dir dbt
+          dbt snapshot --profiles-dir ~/.dbt --project-dir dbt
       
       - name: Run integration tests
         run: |
@@ -447,6 +452,7 @@ jobs:
         run: |
           dbt seed --profiles-dir ~/.dbt --project-dir dbt
           dbt run --profiles-dir ~/.dbt --project-dir dbt
+          dbt snapshot --profiles-dir ~/.dbt --project-dir dbt
       
       - name: Run regression tests
         run: |
@@ -554,6 +560,7 @@ jobs:
         run: |
           dbt seed --profiles-dir ~/.dbt --project-dir dbt
           dbt run --profiles-dir ~/.dbt --project-dir dbt
+          dbt snapshot --profiles-dir ~/.dbt --project-dir dbt
       
       - name: Run performance tests
         run: |
