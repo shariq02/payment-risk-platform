@@ -175,14 +175,14 @@ jobs:
         run: |
           mkdir -p data/raw
           cd data/raw
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_customers_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_geolocation_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_items_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_payments_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_reviews_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_orders_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_products_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_sellers_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_customers_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_geolocation_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_items_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_payments_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_reviews_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_orders_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_products_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_sellers_dataset.csv
           cd ../..
       
       - name: Load bronze data
@@ -315,14 +315,14 @@ jobs:
         run: |
           mkdir -p data/raw
           cd data/raw
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_customers_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_geolocation_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_items_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_payments_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_reviews_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_orders_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_products_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_sellers_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_customers_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_geolocation_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_items_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_payments_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_reviews_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_orders_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_products_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_sellers_dataset.csv
           cd ../..
       
       - name: Load bronze data
@@ -356,7 +356,7 @@ jobs:
   pytest-regression:
     name: Regression Tests
     runs-on: ubuntu-latest
-    needs: dbt-pipeline
+    needs: pytest-integration
     
     services:
       postgres:
@@ -424,14 +424,14 @@ jobs:
         run: |
           mkdir -p data/raw
           cd data/raw
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_customers_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_geolocation_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_items_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_payments_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_reviews_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_orders_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_products_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_sellers_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_customers_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_geolocation_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_items_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_payments_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_reviews_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_orders_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_products_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_sellers_dataset.csv
           cd ../..
       
       - name: Load bronze data
@@ -463,7 +463,7 @@ jobs:
   pytest-performance:
     name: Performance Tests
     runs-on: ubuntu-latest
-    needs: dbt-pipeline
+    needs: pytest-regression
     
     services:
       postgres:
@@ -531,14 +531,14 @@ jobs:
         run: |
           mkdir -p data/raw
           cd data/raw
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_customers_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_geolocation_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_items_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_payments_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_order_reviews_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_orders_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_products_dataset.csv
-          wget -q https://github.com/olist/brazilian-ecommerce/raw/master/data/olist_sellers_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_customers_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_geolocation_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_items_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_payments_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_order_reviews_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_orders_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_products_dataset.csv
+          wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/olist_sellers_dataset.csv
           cd ../..
       
       - name: Load bronze data
