@@ -32,8 +32,6 @@ import sys
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator, ShortCircuitOperator
-from airflow.operators.bash import BashOperator
-from airflow.utils.dates import days_ago
 
 import psycopg2
 

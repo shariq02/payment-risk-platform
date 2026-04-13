@@ -19,7 +19,6 @@ Usage:
   python3.11 load_bronze.py
 """
 
-import os
 import sys
 from pathlib import Path
 

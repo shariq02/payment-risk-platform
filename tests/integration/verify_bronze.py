@@ -10,7 +10,6 @@ Usage:
 Place at: tests/integration/verify_bronze.py
 """
 
-import os
 import sys
 from pathlib import Path
 

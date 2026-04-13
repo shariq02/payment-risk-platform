@@ -6,7 +6,6 @@ Ensures models run under time thresholds.
 
 import sys
 from pathlib import Path
-import pytest
 import subprocess
 import time
 import os

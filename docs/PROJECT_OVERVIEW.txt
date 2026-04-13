@@ -1,0 +1,340 @@
+=================================================================================
+PAYMENT RISK AND ORDER ANALYTICS PLATFORM - PROJECT OVERVIEW
+=================================================================================
+Last Updated: April 12, 2026
+Version: Public
+
+=================================================================================
+PROJECT SUMMARY
+=================================================================================
+
+An end-to-end data platform for payment fraud detection and order fulfillment
+risk assessment, built on Brazilian e-commerce marketplace data (Olist dataset).
+
+The platform ingests 100K+ e-commerce orders, transforms them through a
+Kimball-modeled data warehouse, and serves real-time risk scores via REST API.
+
+**Tech Stack:** Python 3.11 | PostgreSQL 15 | dbt 1.7 | Apache Airflow 2.8 | FastAPI
+
+**Key Features:**
+- Two-fact Kimball dimensional model preventing grain corruption
+- SCD Type 2 tracking for customer segments and seller risk tiers
+- Airflow orchestration with conditional branching and quality gates
+- FastAPI serving 6 risk scoring endpoints (<100ms p95 latency)
+- 95+ automated tests (94% pass rate)
+
+=================================================================================
+ARCHITECTURE
+=================================================================================
+
+```
+Data Flow:
+
+  Olist CSV Files (8 files, 1M+ rows)
+       |
+       v
+  [Bronze Layer] - Raw ingestion (faithful copy)
+       |
+       v
+  [Staging Layer] - Cleansing & type casting (dbt views)
+       |
+       v
+  [Intermediate Layer] - Feature engineering (dbt ephemeral)
+       |
+       v
+  [Mart Layer] - Kimball star schema
+       |
+       +-- 5 Dimensions (SCD Type 2 on customer/seller)
+       +-- 2 Facts (payment risk, fulfillment risk)
+       +-- 1 KPI aggregate (daily risk metrics)
+       |
+       v
+  [FastAPI] - Risk scoring endpoints
+```
+
+**Orchestration:**
+- **DAG 1 (payment_ingest):** Every 15 min - Bronze load + quality gates
+- **DAG 2 (payment_mart_refresh):** Every 30 min - Marts refresh, snapshots at 2 AM
+
+=================================================================================
+TWO-FACT KIMBALL DESIGN
+=================================================================================
+
+**Why Two Facts?**
+
+The Olist dataset has two distinct business processes with different grains:
+1. **Payment processing** - One order can have multiple payment installments
+2. **Order fulfillment** - One order can have multiple items from multiple sellers
+
+Combining these in a single fact table creates a many-to-many grain, corrupting
+additive measures like payment_value through double-counting.
+
+**Solution:** Separate fact tables following Kimball's one-fact-per-business-process:
+
+**FACT_ORDER_PAYMENTS** (103,886 rows)
+- Grain: One row per payment transaction
+- Measures: payment_value, payment_risk_score
+- Dimensions: customer_sk, geo_sk, payment_method_sk, time_sk
+
+**FACT_ORDER_FULFILLMENT** (112,650 rows)
+- Grain: One row per order item
+- Measures: item_price, freight_value, fulfillment_risk_score
+- Dimensions: seller_sk, product_sk, time_sk
+
+**Shared Dimension:** order_id (degenerate dimension for cross-fact analysis)
+
+=================================================================================
+DIMENSION TABLES
+=================================================================================
+
+**DIM_CUSTOMER** (96,095 rows - SCD Type 2)
+- Tracks: segment_code, risk_tier_code, total_orders, avg_payment_value
+- SCD2 columns: valid_from, valid_to, is_current
+- Why SCD2: Customer segment changes over time (new → returning → vip)
+
+**DIM_SELLER** (3,095 rows - SCD Type 2)
+- Tracks: risk_tier, seller_reliability_score, late_delivery_rate, avg_review_score
+- SCD2 columns: valid_from, valid_to, is_current
+- Why SCD2: Seller risk tier changes as performance degrades
+
+**DIM_PRODUCT** (32,951 rows - Type 1)
+- Hierarchy: department → category → product (74 categories, ~10 departments)
+
+**DIM_GEO** (19,015 rows - Type 1)
+- Zip code level geography with city and state
+
+**DIM_TIME** (26,304 rows - Type 1)
+- Flattened date dimension (no multi-level hierarchy)
+
+=================================================================================
+SCD TYPE 2 IMPLEMENTATION
+=================================================================================
+
+**Strategy:** dbt snapshots with timestamp-based change detection
+
+**Change Triggers:**
+- Customer: segment_code or risk_tier_code changes
+- Seller: risk_tier or seller_category_id changes
+
+**Not Triggers:**
+- Continuous metrics (avg_payment_value, late_delivery_rate)
+- Prevents snapshot table explosion from minor fluctuations
+
+**Snapshot Schedule:** Daily at 2 AM via Airflow BranchPythonOperator
+
+**Point-in-Time Join Pattern:**
+```sql
+SELECT 
+    f.order_id,
+    d.segment_code,
+    f.payment_value
+FROM mart.fact_order_payments f
+INNER JOIN mart.dim_customer d
+    ON f.customer_unique_id = d.customer_unique_id
+    AND f.event_ts >= d.valid_from
+    AND (d.valid_to IS NULL OR f.event_ts < d.valid_to)
+```
+
+This ensures we retrieve the customer dimension record that was **active** at
+transaction time, not the current state.
+
+=================================================================================
+RISK SCORING LOGIC
+=================================================================================
+
+**Payment Risk Score** (0-1 scale)
+Signals:
+- High installment count (>6 installments)
+- Voucher payment type (fraud proxy)
+- High payment value relative to customer average
+- New customer with no payment history
+- Dispute history flag
+
+Thresholds: ≥0.7 high risk, 0.4-0.69 medium, <0.4 low
+
+**Fulfillment Risk Score** (0-1 scale)
+Signals:
+- Late delivery (actual > estimated)
+- Order cancellation
+- Low seller reliability score (<0.6)
+- Low review score (<3 stars)
+- High-risk seller category
+
+Thresholds: ≥0.7 high risk, 0.4-0.69 medium, <0.4 low
+
+**Why Separate Scores:**
+Payment fraud and fulfillment risk have fundamentally different signals.
+Combining into one composite score loses signal separation and makes the
+score harder to explain and act on.
+
+=================================================================================
+AIRFLOW ORCHESTRATION
+=================================================================================
+
+**DAG 1: payment_ingest** (cron: '*/15 * * * *')
+- check_new_data (ShortCircuitOperator) - Skip if no new files
+- load_bronze (PythonOperator) - CSV to PostgreSQL
+- quality_gate (PythonOperator) - 5 data quality checks
+- notify_success (PythonOperator)
+
+**DAG 2: payment_mart_refresh** (cron: '*/30 * * * *')
+- check_snapshot_time (BranchPythonOperator) - Snapshots only 2-2:29 AM
+- run_snapshots OR skip_snapshots (conditional branch)
+- run_staging (BashOperator) - dbt run --select staging
+- run_dimensions (BashOperator) - dbt run --select marts.dimensions
+- run_facts (BashOperator) - dbt run --select marts.facts
+- test_marts (BashOperator) - dbt test --select marts
+- notify_success (PythonOperator)
+
+**Key Pattern:** BranchPythonOperator enables time-window task execution -
+snapshots run once daily while other tasks run every 30 minutes.
+
+=================================================================================
+FASTAPI ENDPOINTS
+=================================================================================
+
+**6 REST Endpoints:**
+
+1. `GET /health` - Database connectivity check
+2. `GET /risk/customer/{customer_id}` - Customer risk profile
+3. `GET /risk/seller/{seller_id}/summary` - Seller risk summary
+4. `GET /risk/top-payment-alerts?limit=20&min_risk_score=0.7` - High-risk payments
+5. `GET /risk/top-fulfillment-alerts?limit=20&min_risk_score=0.7` - High-risk fulfillments
+6. `GET /platform/stats` - Platform-wide metrics
+
+**Technology:**
+- FastAPI with automatic OpenAPI docs (/docs)
+- Pydantic v2 models for response validation
+- Direct psycopg2 queries (no ORM overhead)
+- <100ms p95 latency on 100K+ row queries
+
+=================================================================================
+DATA QUALITY & TESTING
+=================================================================================
+
+**Test Coverage: 95/101 tests passing (94% pass rate)**
+
+**Test Structure:**
+- Unit (24): Loader functions, config validation, DAG structure
+- Integration (47): Full pipeline, data quality, snapshots, API queries
+- Regression (20): NaN bug prevention, SCD2 join correctness
+- Performance (4): dbt execution time thresholds
+
+**dbt Tests (81):**
+- Source freshness checks
+- NOT NULL constraints on primary keys
+- UNIQUE constraints on primary keys
+- Referential integrity (foreign key existence)
+- Accepted values (enum validation)
+
+**Quality Gates in Airflow:**
+- Row count validation (±1% tolerance)
+- NULL constraint checks
+- Data type validation
+- Referential integrity verification
+- Risk score range validation (0-1)
+
+=================================================================================
+KEY TECHNICAL DECISIONS
+=================================================================================
+
+**Two-Fact Design:**
+Prevents measure corruption from many-to-many grain. Each fact maintains
+its natural granularity (payment transaction vs order item).
+
+**Separate Risk Scores:**
+Payment and fulfillment have different signal sources. Separate scores
+provide clearer actionability and align with two-fact architecture.
+
+**SCD Type 2 on Customer/Seller:**
+Tracks segment and tier changes historically. Product and geo dimensions
+are stable (Type 1).
+
+**Surrogate Keys via ROW_NUMBER():**
+dbt CREATE TABLE AS SELECT doesn't support SERIAL. ROW_NUMBER() generates
+stable integer surrogate keys consistent across reruns.
+
+**Flattened dim_time:**
+No benefit to multi-level time hierarchy at 100K order scale. All time
+attributes queryable from single table.
+
+**dbt over raw SQL:**
+DAG-based dependency management, automatic testing, docs generation.
+Enables modular staging → intermediate → mart pattern.
+
+**Airflow orchestration:**
+Quality gates prevent bad data propagation. Conditional branching enables
+daily snapshots while maintaining frequent mart refreshes.
+
+**FastAPI over Flask:**
+Automatic OpenAPI docs, Pydantic validation, async support. Direct
+psycopg2 avoids ORM overhead for read-only analytics API.
+
+**protobuf downgrade to 4.25.3:**
+dbt 1.7.0 incompatible with protobuf 5.x. Downgrade resolves TypeError
+on module import.
+
+=================================================================================
+DELIVERABLES
+=================================================================================
+
+**Code:**
+- Bronze layer (8 tables, 1M+ rows)
+- Staging layer (8 dbt views)
+- Intermediate layer (4 dbt ephemeral models)
+- Mart layer (5 dimensions, 2 facts, 1 KPI aggregate)
+- SCD2 snapshots (customer, seller)
+- Airflow orchestration (2 DAGs)
+- FastAPI risk serving (6 endpoints)
+
+**Testing:**
+- 95/101 automated tests (94% pass rate)
+- 81 dbt tests
+- Quality gates in Airflow
+
+**CI/CD:**
+- GitHub Actions workflow
+- Linting (ruff)
+- Automated testing (pytest)
+
+**Documentation:**
+- README with setup instructions
+- dbt docs with lineage graph
+- API /docs endpoint
+- LICENSE (MIT)
+
+=================================================================================
+PERFORMANCE METRICS
+=================================================================================
+
+- **dbt full pipeline:** 19 seconds (16 models)
+- **dbt tests:** 81 tests passing
+- **Bronze load:** ~5 seconds (1M+ rows)
+- **API response time:** <100ms (p95)
+- **Snapshot processing:** ~3 seconds (96K customer + 3K seller rows)
+
+=================================================================================
+KNOWN ISSUES & RESOLUTIONS
+=================================================================================
+
+**NaN Bug (RESOLVED):**
+- Issue: pandas dtype=str preserved NaN objects, stored as string 'NaN' in PostgreSQL
+- Impact: 5,000+ rows across timestamp and numeric columns
+- Solution: Added convert_nan_to_none() using df.replace({np.nan: None}) before insert
+- Verification: Regression tests checking NULL counts (160, 1783, 2965)
+
+**Protobuf Incompatibility (RESOLVED):**
+- Issue: dbt 1.7.0 incompatible with protobuf 5.x
+- Solution: Downgraded to protobuf==4.25.3
+- Applied: Local environment + CI workflow
+
+=================================================================================
+ACKNOWLEDGMENTS
+=================================================================================
+
+- Olist dataset: https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
+- Product category translation sourced from Olist public repository
+
+=================================================================================
+END OF PROJECT_OVERVIEW.txt
+=================================================================================

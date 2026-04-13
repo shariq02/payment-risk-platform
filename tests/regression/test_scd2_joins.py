@@ -8,7 +8,6 @@ import sys
 from pathlib import Path
 import pytest
 import psycopg2
-from datetime import datetime, timedelta
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))

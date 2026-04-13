@@ -36,7 +36,6 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
-from airflow.sensors.external_task import ExternalTaskSensor
 
 # Import project config
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

@@ -4,10 +4,8 @@ Unit tests for config.py
 Tests configuration loading, validation, and path resolution.
 """
 
-import os
 import sys
 from pathlib import Path
-import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))

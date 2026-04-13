@@ -6,7 +6,6 @@ Tests bronze layer loader functions.
 
 import sys
 from pathlib import Path
-import pytest
 import pandas as pd
 import numpy as np
 
