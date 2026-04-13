@@ -156,6 +156,7 @@ jobs:
       
       - name: Download seed file
         run: |
+          mkdir -p dbt/seeds
           wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/product_category_name_translation.csv -O dbt/seeds/product_category_name_translation.csv
       
       - name: Setup warehouse
@@ -270,6 +271,7 @@ jobs:
       
       - name: Download seed file
         run: |
+          mkdir -p dbt/seeds
           wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/product_category_name_translation.csv -O dbt/seeds/product_category_name_translation.csv
       
       - name: dbt seed and run
@@ -355,6 +357,7 @@ jobs:
       
       - name: Download seed file
         run: |
+          mkdir -p dbt/seeds
           wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/product_category_name_translation.csv -O dbt/seeds/product_category_name_translation.csv
       
       - name: dbt seed and run
@@ -438,6 +441,7 @@ jobs:
       
       - name: Download seed file
         run: |
+          mkdir -p dbt/seeds
           wget -q https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/product_category_name_translation.csv -O dbt/seeds/product_category_name_translation.csv
       
       - name: dbt seed and run
